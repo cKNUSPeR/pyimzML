@@ -1,9 +1,6 @@
 pyimzML
 =======
 
-.. image:: https://readthedocs.org/projects/pyimzml/badge/?version=latest
-    :target: http://pyimzml.readthedocs.org/en/latest/?badge=latest
-    :alt: Documentation Status
 
 Description
 -----------
