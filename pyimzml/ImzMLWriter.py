@@ -13,7 +13,7 @@ from wheezy.template import Engine, CoreExtension, DictLoader
 from pyimzml.compression import NoCompression, ZlibCompression
 
 IMZML_TEMPLATE = """\
-@require(uuid, sha1sum, mz_data_type, int_data_type, run_id, spectra, mode, obo_codes, obo_names, mz_compression, int_compression, polarity, spec_type, scan_direction, scan_pattern, scan_type, line_scan_direction)
+@require(uuid, sha1sum, mz_data_type, int_data_type, run_id, spectra, mode, obo_codes, obo_names, mz_compression, int_compression, polarity, spec_type, scan_direction, scan_pattern, scan_type, line_scan_direction, pixel_size_x, pixel_size_y, max_count_of_pixels_x, max_count_of_pixels_y, max_dimension_x, max_dimension_y)
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <mzML xmlns="http://psi.hupo.org/ms/mzml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0_idx.xsd" version="1.1">
   <cvList count="2">
@@ -80,8 +80,13 @@ IMZML_TEMPLATE = """\
       <cvParam cvRef="IMS" accession="IMS:@obo_codes[scan_pattern]" name="@obo_names[scan_pattern]"/>
       <cvParam cvRef="IMS" accession="IMS:@obo_codes[scan_type]" name="@obo_names[scan_type]"/>
       <cvParam cvRef="IMS" accession="IMS:@obo_codes[line_scan_direction]" name="@obo_names[line_scan_direction]"/>
-      <cvParam cvRef="IMS" accession="IMS:1000042" name="max count of pixels x" value="@{(max(s.coords[0] for s in spectra))!!s}"/>
-      <cvParam cvRef="IMS" accession="IMS:1000043" name="max count of pixels y" value="@{(max(s.coords[1] for s in spectra))!!s}"/>
+      <cvParam cvRef="IMS" accession="IMS:1000042" name="max count of pixels x" value="@{max_count_of_pixels_x!!s}"/>
+      <cvParam cvRef="IMS" accession="IMS:1000043" name="max count of pixels y" value="@{max_count_of_pixels_y!!s}"/>
+      <cvParam cvRef="IMS" accession="IMS:1000046" name="pixel size x" value="@pixel_size_x"/>
+      <cvParam cvRef="IMS" accession="IMS:1000047" name="pixel size y" value="@pixel_size_y"/>
+      <cvParam cvRef="IMS" accession="IMS:1000044" name="max dimension x" unitAccession="UO:0000017" unitCvRef="UO" unitName="micrometer" value="@{max_dimension_x!!s}"/>
+      <cvParam cvRef="IMS" accession="IMS:1000045" name="max dimension y" unitAccession="UO:0000017" unitCvRef="UO" unitName="micrometer" value="@{max_dimension_y!!s}"/>
+      
     </scanSettings>
   </scanSettingsList>
 
@@ -184,6 +189,7 @@ class ImzMLWriter(object):
     def __init__(self, output_filename,
                  mz_dtype=np.float64, intensity_dtype=np.float32, mode="auto", spec_type="centroid",
                  scan_direction="top_down", line_scan_direction="line_left_right", scan_pattern="one_way", scan_type="horizontal_line", 
+                 pixel_size_x="50", pixel_size_y="50",
                  mz_compression=NoCompression(), intensity_compression=NoCompression(),
                  polarity=None):
 
@@ -205,6 +211,8 @@ class ImzMLWriter(object):
         self.scan_pattern = scan_pattern
         self.scan_type = scan_type
         self.line_scan_direction = line_scan_direction
+        self.pixel_size_x = pixel_size_x
+        self.pixel_size_y = pixel_size_y
 
         self._write_ibd(self.uuid.bytes)
 
@@ -287,6 +295,14 @@ class ImzMLWriter(object):
         scan_pattern = self.scan_pattern
         scan_type = self.scan_type
         line_scan_direction = self.line_scan_direction
+        pixel_size_x = self.pixel_size_x
+        pixel_size_y = self.pixel_size_y
+        max_count_of_pixels_x = max(s.coords[0] for s in self.spectra)
+        max_count_of_pixels_y = max(s.coords[1] for s in self.spectra)
+        max_dimension_x = int(pixel_size_x)*max_count_of_pixels_x
+        max_dimension_y = int(pixel_size_y)*max_count_of_pixels_y
+
+
         
         self.xml.write(self.imzml_template.render(locals()))
 
